@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.13.35825.156 d17.13
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SmartSync_Console", "SmartSync_Console.csproj", "{64D2B4CD-0608-4719-B0D4-8D5F813E35CE}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{64D2B4CD-0608-4719-B0D4-8D5F813E35CE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{64D2B4CD-0608-4719-B0D4-8D5F813E35CE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{64D2B4CD-0608-4719-B0D4-8D5F813E35CE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{64D2B4CD-0608-4719-B0D4-8D5F813E35CE}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {AEC5F31F-E686-47CF-8672-FADF034FB496}
+	EndGlobalSection
+EndGlobal
