@@ -2,21 +2,23 @@
 {
     class Tracker
     {
-        private string directory = "";
-        private FileTree onTracked;
+        private readonly string directory = "";
+        private readonly FileTree trackedFileTree;
         public Tracker(FileTree fileTree)
         {
-            directory = fileTree.root.GetData().path;
-            onTracked = fileTree;
+            directory = fileTree.rootDirectory;
+            trackedFileTree = fileTree;
         }
         public void TrackDirectory()
         {
-            FileSystemWatcher watcher = new();
-            watcher.Path = directory;
-            watcher.Filter = "*.*";
-            watcher.NotifyFilter = NotifyFilters.LastWrite
-                | NotifyFilters.FileName
-                | NotifyFilters.DirectoryName;
+            FileSystemWatcher watcher = new()
+            {
+                Path = directory,
+                Filter = "*.*",
+                NotifyFilter = NotifyFilters.LastWrite
+                    | NotifyFilters.FileName
+                    | NotifyFilters.DirectoryName
+            };
 
             watcher.Created += OnCreated;
             watcher.Deleted += OnDeleted;
@@ -44,23 +46,6 @@
         private static void OnRenamed(object source, RenamedEventArgs e)
         {
             Console.WriteLine($"文件重命名：从 {e.OldFullPath} 到 {e.FullPath}");
-        }
-    }
-
-    class Finder
-    {
-        private FileData nullFileData = new() { Kind = FileData.KIND.NULL };
-        public FileData FindNode(FileTree fileTree, string name)
-        {
-            if (fileTree.fileMap.nameDataPairs.TryGetValue(name, out FileData? value))
-            {
-                return value;
-            }
-            else
-            {
-                return nullFileData;
-            }
-                
         }
     }
 }

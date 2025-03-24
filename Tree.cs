@@ -2,9 +2,9 @@
 
 namespace SmartSync_Console
 {
-    class Tree<T> where T: IComparable<T>, new()
+    class Tree<T> where T: new()
     {
-        internal TreeNode<T> root;
+        internal T root;
         public Tree()
         {
             root = new();
@@ -13,13 +13,13 @@ namespace SmartSync_Console
     class TreeNode<T> : IComparable<TreeNode<T>> where T: IComparable<T>, new()
     {
         private T _data;
-        private SortedSet<TreeNode<T>> treeNodes;
+        private readonly SortedSet<TreeNode<T>> treeNodes;
         public TreeNode()
         {
             _data = new();
-            treeNodes = new();
+            treeNodes = [];
         }
-        public T data
+        public T Data
         {
             get
             {
@@ -32,11 +32,11 @@ namespace SmartSync_Console
         }
         internal void SetData(T data)
         {
-            this.data = data;
+            this.Data = data;
         }
         public T GetData()
         {
-            return data;
+            return Data;
         }
         public SortedSet<TreeNode<T>> GetList()
         {
