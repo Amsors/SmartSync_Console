@@ -1,9 +1,23 @@
-﻿namespace SmartSync_Console
+﻿using Microsoft.Extensions.Logging;
+#pragma warning disable CA2254
+
+namespace SmartSync_Console
 {
     class Tracker
     {
         private readonly string directory = "";
         private readonly FileTree trackedFileTree;
+        private static readonly ILogger<Tracker> _logger;
+        public static ILogger<Tracker> Logger => _logger;
+        static Tracker()
+        {
+            ILoggerFactory factory = LoggerFactory.Create(builder =>
+            {
+                builder.AddConsole();
+                builder.AddConsole().SetMinimumLevel(LogLevel.Trace);
+            });
+            _logger = factory.CreateLogger<Tracker>();
+        }
         public Tracker(FileTree fileTree)
         {
             directory = fileTree.rootDirectory;
@@ -14,7 +28,7 @@
             FileSystemWatcher watcher = new()
             {
                 Path = directory,
-                Filter = "*.*",
+                //Filter = "*",
                 NotifyFilter = NotifyFilters.LastWrite
                     | NotifyFilters.FileName
                     | NotifyFilters.DirectoryName
@@ -25,27 +39,32 @@
             watcher.Changed += OnChanged;
             watcher.Renamed += OnRenamed;
 
+            watcher.IncludeSubdirectories = true;
             watcher.EnableRaisingEvents = true;
 
             Console.ReadKey();
         }
-        private static void OnCreated(object source, FileSystemEventArgs e)
+        private void OnCreated(object source, FileSystemEventArgs e)
         {
-            Console.WriteLine($"文件创建：{e.FullPath}");
+            Logger.LogInformation($"文件或文件夹创建：{e.FullPath}");
+            FileOperator.AddFile(trackedFileTree, e.FullPath);
         }
 
-        private static void OnDeleted(object source, FileSystemEventArgs e)
+        private void OnDeleted(object source, FileSystemEventArgs e)
         {
-            Console.WriteLine($"文件删除：{e.FullPath}");
+            Logger.LogInformation($"文件或文件夹删除：{e.FullPath}");
+            FileOperator.DeleteFile(trackedFileTree, e.FullPath);
         }
 
-        private static void OnChanged(object source, FileSystemEventArgs e)
+        private void OnChanged(object source, FileSystemEventArgs e)
         {
-            Console.WriteLine($"文件更改：{e.FullPath}");
+            Logger.LogInformation($"文件或文件夹更改：{e.FullPath}");
+            FileOperator.UpdateFile(trackedFileTree, e.FullPath);
         }
-        private static void OnRenamed(object source, RenamedEventArgs e)
+        private void OnRenamed(object source, RenamedEventArgs e)
         {
-            Console.WriteLine($"文件重命名：从 {e.OldFullPath} 到 {e.FullPath}");
+            Logger.LogInformation($"文件或文件夹重命名：从 {e.OldFullPath} 到 {e.FullPath}");
+            FileOperator.RenameFile(trackedFileTree, e.OldFullPath, e.FullPath);
         }
     }
 }

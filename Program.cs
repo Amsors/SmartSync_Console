@@ -10,6 +10,7 @@ namespace SmartSync_Console
             using ILoggerFactory factory = LoggerFactory.Create(builder =>
             {
                 builder.AddConsole();
+                builder.AddConsole().SetMinimumLevel(LogLevel.Trace);
             });
 
             ILogger logger = factory.CreateLogger<MainProgram>();

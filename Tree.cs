@@ -1,4 +1,4 @@
-﻿using System.IO;
+﻿#pragma warning disable CA2254
 
 namespace SmartSync_Console
 {
