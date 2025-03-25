@@ -18,9 +18,9 @@ namespace SmartSync_Console
             });
             _logger = factory.CreateLogger<Tracker>();
         }
-        public Tracker(FileTree fileTree)
+        public Tracker(string directory, FileTree fileTree)
         {
-            directory = fileTree.rootDirectory;
+            this.directory = fileTree.rootDirectory + @"\" + directory;
             trackedFileTree = fileTree;
         }
         public void TrackDirectory()

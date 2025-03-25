@@ -15,9 +15,8 @@ namespace SmartSync_Console
 
             ILogger logger = factory.CreateLogger<MainProgram>();
 
-            string TrackDirectory = @"C:\Users\fmz2024\Desktop\TEST";
-            FileTree fileTree = new(TrackDirectory);
-            Tracker tracker = new(fileTree);
+            FileTree fileTree = new("root", @"C:\Users\fmz2024\Desktop\TEST");
+            Tracker tracker = new(@"root", fileTree);
             tracker.TrackDirectory();
 
 

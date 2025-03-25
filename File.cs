@@ -1,16 +1,18 @@
 ﻿using System.IO;
 using Microsoft.Extensions.Logging;
-using System.Security.Cryptography;
 #pragma warning disable CA2254
 
 namespace SmartSync_Console
 {
+    [Serializable]
     class FileTree : Tree<TreeNode<FileData>>
     {
+        [NonSerialized]
         public readonly string rootDirectory = "";
         private readonly FileMap _fileMap = new();
-        public FileMap GeneralFileMap => _fileMap;
+        public FileMap GeneralFileMap => _fileMap; 
 
+        [NonSerialized]
         private static readonly ILogger<FileTree> _logger;
         public static ILogger<FileTree> Logger => _logger;
         static FileTree()
@@ -22,30 +24,58 @@ namespace SmartSync_Console
             });
             _logger = factory.CreateLogger<FileTree>();
         }
-        public FileTree(string directory)
+        public FileTree(string name, string repoDirectory)
         {
-            this.rootDirectory = directory;
+            this.rootDirectory = repoDirectory;
             FileData noFather = new() { Kind = FileData.KIND.NOFATHER };
-            FileOperator.RecursiveInitialize(this, directory, root, noFather);
-        }       
+            this.root.Data.Path = name;
+            FileOperator.RecursiveInitialize(this, name, root, noFather);
+        }
     }
 
     class FileData : IComparable<FileData>
     {
-        private string _name = "";
+        //private string _name = "";
+        //public string Name => _name;
         private long _fileSize;
+        public long FileSize{
+            get{ return _fileSize; }
+            set{ _fileSize = value; }
+        }
         private DateTime _lastWriteTime;
+        public DateTime LastWriteTime
+        {
+            get { return _lastWriteTime; }
+            set { _lastWriteTime = value; }
+        }
         private DateTime _lastAccessTime;
+        public DateTime LastAccessTime
+        {
+            get { return _lastAccessTime; }
+            set { _lastAccessTime = value; }
+        }
         private FileAttributes _fileAttributes;
-
-        private readonly string _path="";
-        public string Path => _path;
-
+        public FileAttributes FileAttributes
+        {
+            get { return _fileAttributes; }
+            set { _fileAttributes = value; }
+        }
+        private string _path="";
+        public string Path{
+            get { return _path; }
+            set { _path = value; }
+        }
         private bool _hashed = false;
-        public bool Hashed => _hashed;
+        public bool Hashed{
+            get { return _hashed; }
+            set { _hashed = value; }
+        }
         private string _hashValue = "";
-        public string HashValue => _hashValue;
-
+        public string HashValue
+        {
+            get { return _hashValue; }
+            set { _hashValue = value; }
+        }
         private readonly FileMap _subFileMap = new();
         public FileMap SubFileMap => _subFileMap;
         public enum KIND:int
@@ -68,6 +98,7 @@ namespace SmartSync_Console
                 _kind = value;
             }
         }
+        [NonSerialized]
         private static readonly ILogger<FileData> _logger;
         public static ILogger<FileData> Logger => _logger;
         static FileData()
@@ -80,239 +111,55 @@ namespace SmartSync_Console
             _logger = factory.CreateLogger<FileData>();
         }
         public FileData() { }
-        public FileData(string path)
-        {
-            if (File.Exists(path))
-            {
-                Logger.LogTrace($"Initializing {path}");
-                _kind = KIND.FILE;
-                this._path = path;
+        //public FileData(string absolutePath)
+        //{
+        //    if (File.Exists(absolutePath))
+        //    {
+        //        //string relevantPath=FileOperator.GetRelevantPath()
+        //        Logger.LogTrace($"Initializing {absolutePath}");
+        //        _kind = KIND.FILE;
+        //        this._path = absolutePath;
 
-                FileInfo fileInfo = new(path);
-                _fileSize = fileInfo.Length;
-                _lastWriteTime = fileInfo.LastWriteTime;
-                _lastAccessTime = fileInfo.LastAccessTime;
+        //        FileInfo fileInfo = new(absolutePath);
+        //        _fileSize = fileInfo.Length;
+        //        _lastWriteTime = fileInfo.LastWriteTime;
+        //        _lastAccessTime = fileInfo.LastAccessTime;
 
-                _fileAttributes = File.GetAttributes(path);
-            }
-            if (Directory.Exists(path))
-            {
-                Logger.LogTrace($"Initializing {path}");
-                _kind = KIND.DIRECTORY;
-                this._path = path;
+        //        _fileAttributes = File.GetAttributes(absolutePath);
+        //    }
+        //    if (Directory.Exists(absolutePath))
+        //    {
+        //        Logger.LogTrace($"Initializing {absolutePath}");
+        //        _kind = KIND.DIRECTORY;
+        //        this._path = absolutePath;
 
-                DirectoryInfo directoryInfo = new(path);
-                _lastWriteTime = directoryInfo.LastWriteTime;
-                _lastAccessTime = directoryInfo.LastAccessTime;
-            }
-        }
-        public void UpdateFileData()
-        {
-            if (File.Exists(_path))
-            {
-                Logger.LogTrace($"Updating file {_path}");
-
-                FileInfo fileInfo = new(_path);
-                _fileSize = fileInfo.Length;
-                _lastWriteTime = fileInfo.LastWriteTime;
-                _lastAccessTime = fileInfo.LastAccessTime;
-
-                _fileAttributes = File.GetAttributes(_path);
-            }
-            if (Directory.Exists(_path))
-            {
-                Logger.LogTrace($"Updating directory {_path}");
-
-                DirectoryInfo directoryInfo = new(_path);
-                _lastWriteTime = directoryInfo.LastWriteTime;
-                _lastAccessTime = directoryInfo.LastAccessTime;
-
-                if(CheckFolder(this, _path) == false)
-                {
-                    Logger.LogWarning($"{_path} has different sub-item sum from filesystem and from filemap");
-                }
-            }
-        }
-        private static bool CheckFolder(FileData filedata, string path)
-        {
-            int cnt = 0;
-            string[] files = Directory.GetFiles(path);
-            cnt += files.Length;
-            foreach(string i in files)
-            {
-                if (filedata.SubFileMap.NameDataPairs.ContainsKey(i))
-                {
-                    continue;
-                }
-            }
-            string[] directories = Directory.GetDirectories(path);
-            cnt += directories.Length;
-            foreach (string i in directories)
-            {
-                if (filedata.SubFileMap.NameDataPairs.ContainsKey(i))
-                {
-                    continue;
-                }
-            }
-            if (cnt == filedata.SubFileMap.NameDataPairs.Count)
-            {
-                return true;
-            }
-            return false;
-        }
-        public void UpdateHash()
-        {
-            using var sha256 = SHA256.Create();
-            using var stream = File.OpenRead(Path);
-            byte[] hashBytes = sha256.ComputeHash(stream);
-            _hashValue = BitConverter.ToString(hashBytes).Replace("-", "").ToLower();
-        }
+        //        DirectoryInfo directoryInfo = new(absolutePath);
+        //        _lastWriteTime = directoryInfo.LastWriteTime;
+        //        _lastAccessTime = directoryInfo.LastAccessTime;
+        //    }
+        //}
         public int CompareTo(FileData? fileData)
         {
             if (fileData == null) return 1;
             return Path.CompareTo(fileData.Path);
         }
-        public void AddSubFile(string directory, FileData fileData)
+        public void AddSubFile(string path, FileData fileData)
         {
-            if (_subFileMap.NameDataPairs.ContainsKey(directory))
+            if (_subFileMap.NameDataPairs.ContainsKey(path))
             {
-                Logger.LogWarning($"File {directory} already exist, unable to add");
+                Logger.LogWarning($"File {path} already exist, unable to add");
                 return;
             }
-            _subFileMap.NameDataPairs.Add(directory, fileData);
+            _subFileMap.NameDataPairs.Add(path, fileData);
         }
-        public void DeleteSubFile(string directory)
+        public void DeleteSubFile(string path)
         {
-            if (_subFileMap.NameDataPairs.ContainsKey(directory)==false)
+            if (_subFileMap.NameDataPairs.ContainsKey(path)==false)
             {
-                Logger.LogWarning($"File {directory} does not exist, unable to delete");
+                Logger.LogWarning($"File {path} does not exist, unable to delete");
                 return;
             }
-            _subFileMap.NameDataPairs.Remove(directory);
-        }
-        public void Rename(string name)
-        {
-            _name = name;
-        }
-        public void Change()
-        {
-            UpdateFileData();
-        }
-    }
-
-    class FileOperator
-    {
-        private static readonly ILogger<FileOperator> _logger;
-        public static ILogger<FileOperator> Logger => _logger;
-        static FileOperator()
-        {
-            ILoggerFactory factory = LoggerFactory.Create(builder =>
-            {
-                builder.AddConsole();
-                builder.AddConsole().SetMinimumLevel(LogLevel.Trace);
-            });
-            _logger = factory.CreateLogger<FileOperator>();
-        }
-
-        public static void RecursiveInitialize(FileTree fileTree, string path, TreeNode<FileData> treeNode, FileData father)
-        {
-            FileData fileData = new(path);
-            treeNode.Data = fileData;
-            fileTree.GeneralFileMap.AddPair(path, fileData);
-            if (father.Kind != FileData.KIND.NOFATHER)
-            {
-                father.AddSubFile(path, fileData);
-            }
-            if (Directory.Exists(path))
-            {
-                string[] files = Directory.GetFiles(path);
-                foreach (string i in files)
-                {
-                    TreeNode<FileData> newNode = new();
-                    treeNode.GetList().Add(newNode);
-                    RecursiveInitialize(fileTree, i, newNode, fileData);
-                }
-                string[] direvtories = Directory.GetDirectories(path);
-                foreach (string i in direvtories)
-                {
-                    TreeNode<FileData> newNode = new();
-                    treeNode.GetList().Add(newNode);
-                    RecursiveInitialize(fileTree, i, newNode, fileData);
-                }
-            }
-        }
-        public static FileData FindFile(FileTree fileTree, string directory)
-        {
-            if (fileTree.GeneralFileMap.NameDataPairs.TryGetValue(directory, out FileData? value))
-            {
-                return value;
-            }
-            Logger.LogWarning($"file {directory} can not be found");
-            return new FileData { Kind = FileData.KIND.NULL };
-        }
-        public static void FindParent(string directory, out string? value)
-        {
-            string? parent = Path.GetDirectoryName(directory);
-            if (parent == null)
-            {
-                Logger.LogWarning("father directory do not exist (file system)");
-            }
-            value = parent;
-            return;
-        }
-        public static FileData AddFile(FileTree fileTree, string directory)
-        {
-            Logger.LogTrace($"FileTree add file {directory}");
-            FindParent(directory, out string? parent);
-            if (parent == null) { return new FileData { Kind = FileData.KIND.NULL }; }
-            if (fileTree.GeneralFileMap.NameDataPairs.TryGetValue(parent, out FileData? parentValue))
-            {
-                FileData newFile = new(directory);
-                parentValue.AddSubFile(directory, newFile);
-                fileTree.GeneralFileMap.AddPair(directory, newFile);
-                return newFile;
-            }
-            else
-            {
-                Logger.LogWarning("father directory do not exist (FileData instance)");
-                return new FileData { Kind = FileData.KIND.NULL };
-            }
-        }
-        public static void DeleteFile(FileTree fileTree, string directory)
-        {
-            Logger.LogTrace($"FileTree delete file {directory}");
-            FindParent(directory, out string? parent);
-            if (parent == null) { return; }
-            FileData fileToDel = FindFile(fileTree, directory);
-            if (fileToDel.Kind == FileData.KIND.NULL) { return; }
-            if(fileTree.GeneralFileMap.NameDataPairs.TryGetValue(parent, out FileData? parentValue))
-            {
-                parentValue.DeleteSubFile(directory);
-                fileTree.GeneralFileMap.DeletePair(directory);
-            }
-        }
-        //public static FileData MoveFile(FileTree fileTreeSRC, FileTree fileTreeDST,
-        //    string pathSRC, string pathDST)
-        //{
-        //    Logger.LogTrace($"FileTree moved from {pathSRC} to {pathDST}");
-        //    DeleteFile(fileTreeSRC, pathSRC);
-        //    return AddFile(fileTreeDST, pathDST);
-        //}
-        public static FileData RenameFile(FileTree fileTree, string oldPath, string newPath)
-        {
-            Logger.LogTrace($"FileTree rename file from {oldPath} to {newPath}");
-            FileData fileToRename = FindFile(fileTree, oldPath);
-            if (fileToRename.Kind == FileData.KIND.NULL) return new FileData { Kind = FileData.KIND.NULL };
-            fileToRename.Rename(newPath);
-            return fileToRename;
-        }
-        public static FileData UpdateFile(FileTree fileTree, string path)
-        {
-            Logger.LogTrace($"FileTree update file {path}");
-            FileData fileToUpdate = FindFile(fileTree, path);
-            if (fileToUpdate.Kind == FileData.KIND.NULL) return new FileData { Kind = FileData.KIND.NULL };
-            fileToUpdate.UpdateFileData();
-            return fileToUpdate;
+            _subFileMap.NameDataPairs.Remove(path);
         }
     }
 
