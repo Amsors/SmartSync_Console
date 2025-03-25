@@ -1,5 +1,7 @@
 ﻿using System.IO;
+using System.Text.Json.Serialization;
 using Microsoft.Extensions.Logging;
+#pragma warning disable IDE0079
 #pragma warning disable CA2254
 
 namespace SmartSync_Console
@@ -7,14 +9,25 @@ namespace SmartSync_Console
     [Serializable]
     class FileTree
     {
-        private readonly FileData root = new();
-        [NonSerialized]
+        private FileData root = new();
+        public FileData Root
+        {
+            get { return root; }
+            set { root = value; }
+        }
         public readonly string rootDirectory = "";
-        private readonly FileMap _fileMap = new();
-        public FileMap GeneralFileMap => _fileMap; 
 
-        [NonSerialized]
+        private FileMap _fileMap = new();
+        //[JsonInclude]
+        //public FileMap GeneralFileMap => _fileMap;
+        public FileMap GeneralFileMap
+        {
+            get { return _fileMap; }
+            set { _fileMap = value; }
+        }
+
         private static readonly ILogger<FileTree> _logger;
+        [JsonIgnore]
         public static ILogger<FileTree> Logger => _logger;
         static FileTree()
         {
@@ -29,12 +42,15 @@ namespace SmartSync_Console
         {
             this.rootDirectory = repoDirectory;
             FileData noFather = new() { Kind = FileData.KIND.NOFATHER };
-            this.root.Path = name;
             FileOperator.RecursiveInitialize(this, name, root, noFather);
+            root = GeneralFileMap.NameDataPairs[name];
         }
+        [JsonConstructor]
+        public FileTree() { }
     }
 
-    class FileData : IComparable<FileData>
+    [method: JsonConstructor]
+    class FileData() : IComparable<FileData>
     {
         //private string _name = "";
         //public string Name => _name;
@@ -77,8 +93,14 @@ namespace SmartSync_Console
             get { return _hashValue; }
             set { _hashValue = value; }
         }
-        private readonly FileMap _subFileMap = new();
-        public FileMap SubFileMap => _subFileMap;
+        private FileMap _subFileMap = new();
+        //[JsonInclude]
+        //public FileMap SubFileMap => _subFileMap;
+        public FileMap SubFileMap
+        {
+            get { return _subFileMap; }
+            set { _subFileMap = value; }
+        }
         public enum KIND:int
         {
             NA=0,
@@ -90,17 +112,11 @@ namespace SmartSync_Console
         private KIND _kind=KIND.NA;
         public KIND Kind
         {
-            get
-            {
-                return _kind;
-            }
-            set
-            {
-                _kind = value;
-            }
+            get{ return _kind; }
+            set{ _kind = value; }
         }
-        [NonSerialized]
         private static readonly ILogger<FileData> _logger;
+        [JsonIgnore]
         public static ILogger<FileData> Logger => _logger;
         static FileData()
         {
@@ -111,34 +127,7 @@ namespace SmartSync_Console
             });
             _logger = factory.CreateLogger<FileData>();
         }
-        public FileData() { }
-        //public FileData(string absolutePath)
-        //{
-        //    if (File.Exists(absolutePath))
-        //    {
-        //        //string relevantPath=FileOperator.GetRelevantPath()
-        //        Logger.LogTrace($"Initializing {absolutePath}");
-        //        _kind = KIND.FILE;
-        //        this._path = absolutePath;
 
-        //        FileInfo fileInfo = new(absolutePath);
-        //        _fileSize = fileInfo.Length;
-        //        _lastWriteTime = fileInfo.LastWriteTime;
-        //        _lastAccessTime = fileInfo.LastAccessTime;
-
-        //        _fileAttributes = File.GetAttributes(absolutePath);
-        //    }
-        //    if (Directory.Exists(absolutePath))
-        //    {
-        //        Logger.LogTrace($"Initializing {absolutePath}");
-        //        _kind = KIND.DIRECTORY;
-        //        this._path = absolutePath;
-
-        //        DirectoryInfo directoryInfo = new(absolutePath);
-        //        _lastWriteTime = directoryInfo.LastWriteTime;
-        //        _lastAccessTime = directoryInfo.LastAccessTime;
-        //    }
-        //}
         public int CompareTo(FileData? fileData)
         {
             if (fileData == null) return 1;
@@ -164,11 +153,18 @@ namespace SmartSync_Console
         }
     }
 
-    class FileMap
+    [method: JsonConstructor]
+    class FileMap()
     {
-        private readonly SortedList<string, FileData> _nameDataPairs;
-        public SortedList<string, FileData> NameDataPairs => _nameDataPairs;
+        private SortedList<string, FileData> _nameDataPairs = [];
+        //public SortedList<string, FileData> NameDataPairs => _nameDataPairs;
+        public SortedList<string, FileData> NameDataPairs
+        {
+            get { return _nameDataPairs; }
+            set { _nameDataPairs = value; }
+        }
         private static readonly ILogger<FileMap> _logger;
+        [JsonIgnore]
         public static ILogger<FileMap> Logger => _logger;
         static FileMap()
         {
@@ -179,6 +175,7 @@ namespace SmartSync_Console
             });
             _logger = factory.CreateLogger<FileMap>();
         }
+
         public void AddPair(string key, FileData value)
         {
             if (_nameDataPairs.ContainsKey(key))
@@ -196,10 +193,6 @@ namespace SmartSync_Console
                 return;
             }
             _nameDataPairs.Remove(key);
-        }
-        public FileMap()
-        {
-            _nameDataPairs = [];
         }
     }
 }

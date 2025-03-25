@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.Logging;
+#pragma warning disable IDE0079
 #pragma warning disable CA2254
 
 namespace SmartSync_Console

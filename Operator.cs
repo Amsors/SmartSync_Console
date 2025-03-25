@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.Logging;
 using System.Security.Cryptography;
 using static SmartSync_Console.FileData;
+#pragma warning disable IDE0079
 #pragma warning disable CA2254
 
 namespace SmartSync_Console
@@ -46,12 +47,12 @@ namespace SmartSync_Console
                 fileData.LastAccessTime = directoryInfo.LastAccessTime;
             }
         }
-        public static void RecursiveInitialize(FileTree fileTree, string path, FileData treeNode, FileData father)
+        public static void RecursiveInitialize(FileTree fileTree, string path, FileData fileData, FileData father)
         {
             string absolutePath = GetAbsolutePath(fileTree, path);
-            FileData fileData = new();
+            //fileData = new();
             FileOperator.SetFileData(fileTree, fileData, path);
-            treeNode = fileData;
+            //treeNode = fileData;
             fileTree.GeneralFileMap.AddPair(path, fileData);
             if (father.Kind != FileData.KIND.NOFATHER)
             {
