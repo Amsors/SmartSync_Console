@@ -4,8 +4,8 @@
     {
         public SmartSyncDataBase(FileTree fileTree)
         {
-            Tree<TreeNode<FileData>> DatabaseTree = fileTree;
-            FileMap DatabaseMap = fileTree.GeneralFileMap;
+            //Tree<TreeNode<FileData>> DatabaseTree = fileTree;
+            //FileMap DatabaseMap = fileTree.GeneralFileMap;
             
         }
     }

@@ -5,8 +5,9 @@ using Microsoft.Extensions.Logging;
 namespace SmartSync_Console
 {
     [Serializable]
-    class FileTree : Tree<TreeNode<FileData>>
+    class FileTree
     {
+        private readonly FileData root = new();
         [NonSerialized]
         public readonly string rootDirectory = "";
         private readonly FileMap _fileMap = new();
@@ -28,7 +29,7 @@ namespace SmartSync_Console
         {
             this.rootDirectory = repoDirectory;
             FileData noFather = new() { Kind = FileData.KIND.NOFATHER };
-            this.root.Data.Path = name;
+            this.root.Path = name;
             FileOperator.RecursiveInitialize(this, name, root, noFather);
         }
     }

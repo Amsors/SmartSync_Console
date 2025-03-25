@@ -46,12 +46,12 @@ namespace SmartSync_Console
                 fileData.LastAccessTime = directoryInfo.LastAccessTime;
             }
         }
-        public static void RecursiveInitialize(FileTree fileTree, string path, TreeNode<FileData> treeNode, FileData father)
+        public static void RecursiveInitialize(FileTree fileTree, string path, FileData treeNode, FileData father)
         {
             string absolutePath = GetAbsolutePath(fileTree, path);
             FileData fileData = new();
             FileOperator.SetFileData(fileTree, fileData, path);
-            treeNode.Data = fileData;
+            treeNode = fileData;
             fileTree.GeneralFileMap.AddPair(path, fileData);
             if (father.Kind != FileData.KIND.NOFATHER)
             {
@@ -62,16 +62,14 @@ namespace SmartSync_Console
                 string[] files = Directory.GetFiles(absolutePath);
                 foreach (string subFileName in files)
                 {
-                    TreeNode<FileData> newNode = new();
-                    treeNode.GetList().Add(newNode);
+                    FileData newNode = new();
                     string relevantPath = GetRelevantPath(fileTree, subFileName);
                     RecursiveInitialize(fileTree, relevantPath, newNode, fileData);
                 }
                 string[] directories = Directory.GetDirectories(absolutePath);
                 foreach (string subDirectoryName in directories)
                 {
-                    TreeNode<FileData> newNode = new();
-                    treeNode.GetList().Add(newNode);
+                    FileData newNode = new();
                     string relevantPath = GetRelevantPath(fileTree, subDirectoryName);
                     RecursiveInitialize(fileTree, relevantPath, newNode, fileData);
                 }
